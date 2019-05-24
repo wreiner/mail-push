@@ -1,0 +1,111 @@
+#!/usr/bin/env python
+#
+# This script sends a push notification using
+# Pushsafer service when a new message is found
+# in the inbox.
+#
+# Walter Reiner <walter.reiner@wreiner.at>
+# 2019
+#
+
+# standard Python library
+from imaplib import IMAP4
+import email
+import json
+import sys
+
+# additional libraries
+# download Pushsafer module from Github
+# copy to module directory, e.g. /usr/lib/python3/dist-packages/pushsafer.py
+# or use pip to install
+from pushsafer import init, Client
+
+# global variables
+conf_data = None
+conf_file = "/etc/mail-push.conf"
+push_subject = "Important Email msg"
+push_body = "{} from {}"
+
+def push_notification(subject, sender):
+    init(conf_data["pushsafer_privatekey"])
+
+    body_text = push_body.format(subject, sender)
+    icon = 22
+    sound = 12
+    vibration = 3 
+    url = ""
+    url_title = ""
+    time2live = 0
+    priority = 2
+    retry = 0
+    expire = 0 
+    answer = 0
+    image_1 = "" 
+    image_2 = ""
+    image_3 = ""
+
+    # send_message fields:
+    Client("").send_message(
+            body_text, 
+            push_subject, 
+            conf_data["pushsafer_device_or_group"], 
+            icon,
+            sound,
+            vibration,
+            url,
+            url_title,
+            time2live,
+            priority,
+            retry,
+            expire,
+            answer,
+            image_1,
+            image_2,
+            image_3)
+
+def check_imap_for_new_mail():
+    imap_host = conf_data["imap_host"]
+    imap_port = conf_data["imap_port"]
+    imap_username = conf_data["imap_username"]
+    imap_password = conf_data["imap_password"]
+
+    try:
+        imapcon = IMAP4(host=imap_host, port=imap_port)
+        imapcon.starttls()
+        imapcon.login(imap_username, imap_password)
+    except:
+        print(sys.exc_info()[1])
+        sys.exit(1)
+
+    imapcon.select("INBOX")
+    typ, data = imapcon.search(None, '(UNSEEN)')
+    #typ, data = imapcon.search(None, 'ALL')
+    for num in data[0].split():
+        subject = ""
+        sender = ""
+
+        # fetch mail
+        typ, data = imapcon.fetch(num, '(RFC822)')
+
+        # parse mail
+        msg = email.message_from_bytes(data[0][1])
+
+        if "subject" in msg:
+            subject = msg["subject"]
+
+        if "from" in msg:
+            sender = msg["from"]
+
+        print("Found msg: {} from {}".format(subject, sender))
+        push_notification(subject, sender)
+
+        # mark mail as seen
+        typ, data = conn.store(num,'-FLAGS','\\Seen')
+    imapcon.logout()
+
+if __name__ == "__main__":
+    json_data = open(conf_file).read()
+    conf_data = json.loads(json_data)
+
+    check_imap_for_new_mail()
+
