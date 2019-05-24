@@ -16,12 +16,12 @@ Create the config file in */etc/mail-push.conf* and set values. An example can b
 chmod 400 /etc/mail-push.conf
 ```
 
-Last create the systemd service and timer by copying the file *mail-push.service* to */etc/systemd/system* and the file *mail-push.timer*:
+Last create the systemd service and timer by copying the file *mail-push.service* and *mail-push.timer* to */etc/systemd/system*:
 
 ```
-cp mail-push.service /etc/systemd/system
+cp mail-push.{service,timer} /etc/systemd/system
 systemctl daemon-reload
-systemctl enable reboot-notify.service
+systemctl enable mail-push.timer
 ```
 
 ### Pushsafer Push Notifications

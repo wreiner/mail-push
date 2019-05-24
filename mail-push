@@ -100,7 +100,7 @@ def check_imap_for_new_mail():
         push_notification(subject, sender)
 
         # mark mail as seen
-        typ, data = conn.store(num,'-FLAGS','\\Seen')
+        typ, data = imapcon.store(num,'-FLAGS','\\Seen')
     imapcon.logout()
 
 if __name__ == "__main__":

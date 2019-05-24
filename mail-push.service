@@ -1,0 +1,6 @@
+[Unit]
+Description=mail-push notify service
+
+[Service]
+Type=oneshot
+ExecStart=/srv/mail-push/bin/python3 /srv/mail-push/mail-push/mail-push
